@@ -9,7 +9,7 @@ namespace IdentityAPI.Profiles
         public ProfileMapper()
         {
             CreateMap<UserRegistrationModel, User>();
-       
+
         }
     }
 }

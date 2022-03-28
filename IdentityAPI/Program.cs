@@ -1,14 +1,13 @@
+global using Serilog;
 using IdentityAPI.Data;
+using IdentityAPI.Middleware;
 using IdentityAPI.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 var logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
-    
-    .Enrich.FromLogContext()
     .CreateLogger();
 
 builder.Logging.ClearProviders();
@@ -28,7 +27,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseMiddleware<HttpRequestBodyMiddleware>();
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
