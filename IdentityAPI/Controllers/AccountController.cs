@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
+using IdentityAPI.ActionFilters;
 using IdentityAPI.Models;
 using IdentityAPI.Models.DTO;
+using IdentityAPI.Models.Enum;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,13 +23,9 @@ namespace IdentityAPI.Controllers
             _logger = logger;
         }
         [HttpPost]
-        public async Task<IActionResult> Register(UserRegistrationModel userModel)
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
+        public async Task<IActionResult> Register(UserRegistrationDto userModel)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-            userModel.UserName = userModel.FirstName + userModel.LastName;
             var user = _mapper.Map<User>(userModel);
             var result = await _userManager.CreateAsync(user, userModel.Password);
             if (!result.Succeeded)
@@ -38,9 +36,10 @@ namespace IdentityAPI.Controllers
                 }
                 return BadRequest(ModelState);
             }
-            await _userManager.AddToRoleAsync(user, "Visitor");
-            return Ok("User Created Successfully");
+            await _userManager.AddToRoleAsync(user, Roles.Visitor.ToString());
+            return StatusCode(201);
 
         }
     }
 }
+ 

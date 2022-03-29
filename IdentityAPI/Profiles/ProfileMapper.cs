@@ -8,8 +8,7 @@ namespace IdentityAPI.Profiles
     {
         public ProfileMapper()
         {
-            CreateMap<UserRegistrationModel, User>();
-
+            CreateMap<UserRegistrationDto, User>();
         }
     }
 }

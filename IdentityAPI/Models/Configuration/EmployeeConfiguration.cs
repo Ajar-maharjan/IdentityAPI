@@ -39,6 +39,11 @@ namespace IdentityAPI.Models.Configuration
             },
             new IdentityRole
             {
+                Name = "Manager",
+                NormalizedName = "MANAGER"
+            },
+            new IdentityRole
+            {
                 Name = "Administrator",
                 NormalizedName = "ADMINISTRATOR"
             });
