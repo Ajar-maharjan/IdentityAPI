@@ -4,6 +4,7 @@ using IdentityAPI.Data;
 using IdentityAPI.Extensions;
 using IdentityAPI.Middleware;
 using IdentityAPI.Models;
+using IdentityAPI.Services.AuthService;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -33,6 +34,7 @@ builder.Services.AddAuthentication();
 builder.Services.ConfigureIdentity();
 builder.Services.ConfigureJWT(Configuration);
 builder.Services.AddScoped<ValidationFilterAttribute>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {

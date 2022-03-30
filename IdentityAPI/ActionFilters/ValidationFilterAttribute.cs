@@ -25,7 +25,7 @@ namespace IdentityAPI.ActionFilters
             {
                 _logger.LogError($"Object sent from client is null. Action: {action}, controller: {controller}");
 
-                context.Result = new BadRequestObjectResult($"Object is null. action: {action}, controller: {controller}");
+                context.Result = new BadRequestObjectResult("Object is null");
                 return;
             }
             if (!context.ModelState.IsValid)
