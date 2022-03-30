@@ -5,6 +5,7 @@ using IdentityAPI.Extensions;
 using IdentityAPI.Middleware;
 using IdentityAPI.Models;
 using IdentityAPI.Services.AuthService;
+using IdentityAPI.Services.EmailSender;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,10 +32,11 @@ builder.Services.AddDbContext<ApplicationContext>(opts =>
         opts.UseSqlServer(conn));
 builder.Services.AddIdentityCore<User>();
 builder.Services.AddAuthentication();
-builder.Services.ConfigureIdentity();
+builder.Services.ConfigureIdentity(Configuration);
 builder.Services.ConfigureJWT(Configuration);
 builder.Services.AddScoped<ValidationFilterAttribute>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
