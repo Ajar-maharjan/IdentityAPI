@@ -29,7 +29,7 @@ namespace IdentityAPI.Controllers
             _authService = authService;
             _emailSender = emailSender;
         }
-        [HttpPost]
+        [HttpPost("Register")]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> Register(UserRegistrationDto userRequest)
         {
@@ -43,7 +43,12 @@ namespace IdentityAPI.Controllers
                 }
                 return BadRequest(ModelState);
             }
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var confirmationLink = Url.Action("URLfromclient", "Account", new { token, email = user.Email }, Request.Scheme);
+            var message = new Message(new string[] { user.Email }, "Confirmation email link", confirmationLink, null);
+            await _emailSender.SendEmailAsync(message);
             await _userManager.AddToRoleAsync(user, Roles.Visitor.ToString());
+
             return StatusCode(201);
         }
 
@@ -54,7 +59,7 @@ namespace IdentityAPI.Controllers
             if (!await _authService.ValidateUser(userRequest))
             {
                 _logger.LogWarning($"{nameof(Authenticate)}: Authentication failed. Wrong user name or password.");
-                return Unauthorized();
+                return Unauthorized("Wrong username or password");
             }
             return Ok(new { Token = await _authService.CreateToken() });
         }
@@ -69,7 +74,7 @@ namespace IdentityAPI.Controllers
                 return BadRequest("Invalid email");
             }
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var callback = Url.Action("URLviewfromclient", "Account", new { token, email = user.Email }, Request.Scheme);
+            var callback = Url.Action("URLfromclient", "Account", new { token, email = user.Email }, Request.Scheme);
 
             var message = new Message(new string[] { user.Email }, "Subject: Reset password token", callback , null);
             await _emailSender.SendEmailAsync(message);
@@ -93,6 +98,18 @@ namespace IdentityAPI.Controllers
                 return BadRequest(ModelState);
             }
             return Ok("Password has been reset");
+        }
+
+        [HttpGet("confirmemail")]
+        public async Task<IActionResult> ConfirmEmail(string token, string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+                return BadRequest("Error");
+            var result = await _userManager.ConfirmEmailAsync(user, token);
+            if (!result.Succeeded)
+                return BadRequest("Error");
+            return Ok("Email verified");
         }
     }
 }

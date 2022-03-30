@@ -32,7 +32,8 @@ builder.Services.AddDbContext<ApplicationContext>(opts =>
         opts.UseSqlServer(conn));
 builder.Services.AddIdentityCore<User>();
 builder.Services.AddAuthentication();
-builder.Services.ConfigureIdentity(Configuration);
+builder.Services.ConfigureIdentity();
+builder.Services.ConfigureEmailSender(Configuration);
 builder.Services.ConfigureJWT(Configuration);
 builder.Services.AddScoped<ValidationFilterAttribute>();
 builder.Services.AddScoped<IAuthService, AuthService>();
