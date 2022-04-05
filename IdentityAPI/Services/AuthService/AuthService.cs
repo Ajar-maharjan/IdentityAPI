@@ -33,9 +33,27 @@ namespace IdentityAPI.Services.AuthService
 
         public async Task<bool> ValidateUser(UserAuthenticationDto userForAuth)
         {
+
             _user = await _userManager.FindByNameAsync(userForAuth.UserName);
-            return (_user != null && await _userManager.CheckPasswordAsync(_user,
-            userForAuth.Password));
+            if (_userManager.SupportsUserLockout && await _userManager.IsLockedOutAsync(_user))
+                return false;
+            if (_user != null && await _userManager.CheckPasswordAsync(_user,
+            userForAuth.Password))
+            {
+                if (_userManager.SupportsUserLockout && await _userManager.GetAccessFailedCountAsync(_user) > 0)
+                {
+                    await _userManager.ResetAccessFailedCountAsync(_user);
+                }
+                return true;
+            }
+            else
+            {
+                if (_userManager.SupportsUserLockout && await _userManager.GetLockoutEnabledAsync(_user))
+                {
+                    await _userManager.AccessFailedAsync(_user);
+                }
+                return false;
+            }
         }
         private SigningCredentials GetSigningCredentials()
         {
@@ -47,7 +65,9 @@ namespace IdentityAPI.Services.AuthService
         private async Task<List<Claim>> GetClaims()
         {
             var claims = new List<Claim>
-         {  
+         {
+            new Claim(ClaimTypes.Email, _user.Email),
+            new Claim(ClaimTypes.NameIdentifier,_user.Id),
             new Claim(ClaimTypes.Name, _user.UserName)
          };
             var roles = await _userManager.GetRolesAsync(_user);

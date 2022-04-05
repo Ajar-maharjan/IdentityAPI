@@ -21,6 +21,9 @@ namespace IdentityAPI.Extensions
                 options.User.RequireUniqueEmail = true;
                 options.SignIn.RequireConfirmedEmail = true;
                 options.Tokens.EmailConfirmationTokenProvider = "emailconfirmation";
+                options.Lockout.AllowedForNewUsers = true;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(2);
+                options.Lockout.MaxFailedAccessAttempts = 5;
             });
             builder = new IdentityBuilder(builder.UserType, typeof(IdentityRole),
                 builder.Services);
@@ -34,12 +37,6 @@ namespace IdentityAPI.Extensions
                 options.TokenLifespan = TimeSpan.FromDays(3));
         }
 
-        public static void ConfigureEmailSender(this IServiceCollection services, IConfiguration configuration)
-        {
-            var emailConfig = configuration
-                .GetSection("EmailConfiguration")
-                .Get<EmailConfiguration>();
-            services.AddSingleton(emailConfig);
-        }
+        
     }
 }

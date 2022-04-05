@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 
 namespace IdentityAPI.Extensions
@@ -33,6 +34,15 @@ namespace IdentityAPI.Extensions
                     SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(secretKey))
                 };
             });
+            //.AddGoogle("google", options =>
+            //{
+            //    var googleAuth = configuration.GetSection("Authentication:Google");
+            //    options.ClientId = googleAuth["ClientId"];
+            //    options.ClientSecret = googleAuth["ClientSecret"];
+            //    options.SignInScheme = IdentityConstants.ExternalScheme;
+            //    options.SaveTokens = true;
+            //});
+
         }
     }
 

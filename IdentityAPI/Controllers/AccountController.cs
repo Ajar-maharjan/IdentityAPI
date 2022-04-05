@@ -8,6 +8,7 @@ using IdentityAPI.Services.AuthService;
 using IdentityAPI.Services.EmailSender;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace IdentityAPI.Controllers
 {
@@ -20,14 +21,15 @@ namespace IdentityAPI.Controllers
         private readonly ILogger<AccountController> _logger;
         private readonly IAuthService _authService;
         private readonly IEmailSender _emailSender;
-
-        public AccountController(IMapper mapper, UserManager<User> userManager, ILogger<AccountController> logger, IAuthService authService, IEmailSender emailSender)
+        private readonly IConfiguration _configuration;
+        public AccountController(IMapper mapper, UserManager<User> userManager, ILogger<AccountController> logger, IAuthService authService, IEmailSender emailSender, IConfiguration configuration)
         {
             _mapper = mapper;
             _userManager = userManager;
             _logger = logger;
             _authService = authService;
             _emailSender = emailSender;
+            _configuration = configuration;
         }
         [HttpPost("Register")]
         [ServiceFilter(typeof(ValidationFilterAttribute))]
@@ -44,11 +46,13 @@ namespace IdentityAPI.Controllers
                 return BadRequest(ModelState);
             }
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            var confirmationLink = Url.Action("URLfromclient", "Account", new { token, email = user.Email }, Request.Scheme);
-            var message = new Message(new string[] { user.Email }, "Confirmation email link", confirmationLink, null);
+            var encodedEmailToken = System.Text.Encoding.UTF8.GetBytes(token);
+            var validEmailToken = WebEncoders.Base64UrlEncode(encodedEmailToken);
+            string confirmationLink = $"{_configuration["AppUrl"]}/api/auth/confirmemail?user-Id-{user.Id}&token+{validEmailToken}";
+
+            var message = new Message(new string[] { user.Email }, "Confirm your email", "Confirm your email here: "+confirmationLink, null);
             await _emailSender.SendEmailAsync(message);
             await _userManager.AddToRoleAsync(user, Roles.Visitor.ToString());
-
             return StatusCode(201);
         }
 
@@ -56,6 +60,7 @@ namespace IdentityAPI.Controllers
         [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> Authenticate(UserAuthenticationDto userRequest)
         {
+
             if (!await _authService.ValidateUser(userRequest))
             {
                 _logger.LogWarning($"{nameof(Authenticate)}: Authentication failed. Wrong user name or password.");
@@ -74,9 +79,11 @@ namespace IdentityAPI.Controllers
                 return BadRequest("Invalid email");
             }
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var callback = Url.Action("URLfromclient", "Account", new { token, email = user.Email }, Request.Scheme);
+            var encodedEmailToken = System.Text.Encoding.UTF8.GetBytes(token);
+            var validEmailToken = WebEncoders.Base64UrlEncode(encodedEmailToken);
+            string resetLink = $"{_configuration["AppUrl"]}/api/auth/confirmemail?userId-{user.Id}&token+{validEmailToken}";
 
-            var message = new Message(new string[] { user.Email }, "Subject: Reset password token", callback , null);
+            var message = new Message(new string[] { user.Email }, "Reset your password", "reset your password here: "+resetLink , null);
             await _emailSender.SendEmailAsync(message);
             return Ok();
         }
@@ -88,7 +95,9 @@ namespace IdentityAPI.Controllers
             var user = await _userManager.FindByEmailAsync(userRequest.Email);
             if (user == null)
                 return BadRequest("Unable to find user");
-            var resetPassResult = await _userManager.ResetPasswordAsync(user, userRequest.Token, userRequest.Password);
+            var decodedToken = WebEncoders.Base64UrlDecode(userRequest.Token);
+            var normalToken = System.Text.Encoding.UTF8.GetString(decodedToken);
+            var resetPassResult = await _userManager.ResetPasswordAsync(user, normalToken, userRequest.Password);
             if (!resetPassResult.Succeeded)
             {
                 foreach (var error in resetPassResult.Errors)
@@ -101,12 +110,16 @@ namespace IdentityAPI.Controllers
         }
 
         [HttpGet("confirmemail")]
-        public async Task<IActionResult> ConfirmEmail(string token, string email)
+        public async Task<IActionResult> ConfirmEmail(string id, string token)
         {
-            var user = await _userManager.FindByEmailAsync(email);
-            if (user == null)
+            if (string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(id))
+                return NotFound();
+            var user = await _userManager.FindByIdAsync(id);
+            if (user is null)
                 return BadRequest("Error");
-            var result = await _userManager.ConfirmEmailAsync(user, token);
+            var decodedToken = WebEncoders.Base64UrlDecode(token);
+            var normalToken = System.Text.Encoding.UTF8.GetString(decodedToken);
+            var result = await _userManager.ConfirmEmailAsync(user, normalToken);
             if (!result.Succeeded)
                 return BadRequest("Error");
             return Ok("Email verified");
