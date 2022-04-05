@@ -124,5 +124,7 @@ namespace IdentityAPI.Controllers
                 return BadRequest("Error");
             return Ok("Email verified");
         }
+
+        
     }
 }
