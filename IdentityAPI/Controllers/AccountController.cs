@@ -50,7 +50,7 @@ namespace IdentityAPI.Controllers
             var validEmailToken = WebEncoders.Base64UrlEncode(encodedEmailToken);
             string confirmationLink = $"{_configuration["AppUrl"]}/api/account/confirmemail?user-Id-{user.Id}&token+{validEmailToken}";
 
-            var message = new Message(new string[] { user.Email }, "Confirm your email", "Confirm your email here: "+confirmationLink, null);
+            var message = new Message(new string[] { user.Email }, "Confirm your email", $"Confirm your email by <a href = '{confirmationLink}'> clicking here </a>.", null);
             await _emailSender.SendEmailAsync(message);
             await _userManager.AddToRoleAsync(user, Roles.Visitor.ToString());
             return StatusCode(201);
@@ -83,7 +83,7 @@ namespace IdentityAPI.Controllers
             var validEmailToken = WebEncoders.Base64UrlEncode(encodedEmailToken);
             string resetLink = $"{_configuration["AppUrl"]}/api/account/resetpassword?userId-{user.Id}&token+{validEmailToken}";
 
-            var message = new Message(new string[] { user.Email }, "Reset your password", "reset your password here: "+resetLink , null);
+            var message = new Message(new string[] { user.Email }, "Reset your password", $"reset your password  by <a href = '{resetLink}'> clicking here </a>." , null);
             await _emailSender.SendEmailAsync(message);
             return Ok();
         }

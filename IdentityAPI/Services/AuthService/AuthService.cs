@@ -37,6 +37,10 @@ namespace IdentityAPI.Services.AuthService
             _user = await _userManager.FindByNameAsync(userForAuth.UserName);
             if (_userManager.SupportsUserLockout && await _userManager.IsLockedOutAsync(_user))
                 return false;
+            //if(!await _userManager.IsEmailConfirmedAsync(_user))
+            //{
+            //    return false;
+            //}
             if (_user != null && await _userManager.CheckPasswordAsync(_user,
             userForAuth.Password))
             {
