@@ -48,7 +48,7 @@ namespace IdentityAPI.Controllers
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var encodedEmailToken = System.Text.Encoding.UTF8.GetBytes(token);
             var validEmailToken = WebEncoders.Base64UrlEncode(encodedEmailToken);
-            string confirmationLink = $"{_configuration["AppUrl"]}/api/auth/confirmemail?user-Id-{user.Id}&token+{validEmailToken}";
+            string confirmationLink = $"{_configuration["AppUrl"]}/api/account/confirmemail?user-Id-{user.Id}&token+{validEmailToken}";
 
             var message = new Message(new string[] { user.Email }, "Confirm your email", "Confirm your email here: "+confirmationLink, null);
             await _emailSender.SendEmailAsync(message);
@@ -81,7 +81,7 @@ namespace IdentityAPI.Controllers
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             var encodedEmailToken = System.Text.Encoding.UTF8.GetBytes(token);
             var validEmailToken = WebEncoders.Base64UrlEncode(encodedEmailToken);
-            string resetLink = $"{_configuration["AppUrl"]}/api/auth/confirmemail?userId-{user.Id}&token+{validEmailToken}";
+            string resetLink = $"{_configuration["AppUrl"]}/api/account/resetpassword?userId-{user.Id}&token+{validEmailToken}";
 
             var message = new Message(new string[] { user.Email }, "Reset your password", "reset your password here: "+resetLink , null);
             await _emailSender.SendEmailAsync(message);
