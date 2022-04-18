@@ -6,8 +6,10 @@ using IdentityAPI.Middleware;
 using IdentityAPI.Models;
 using IdentityAPI.Services.AuthService;
 using IdentityAPI.Services.EmailSender;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 var logger = new LoggerConfiguration()
@@ -19,7 +21,6 @@ var conn = Configuration.GetConnectionString("DefaultConnection");
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog(logger);
 builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession();
 builder.Services.AddControllers(config =>
 {
     config.RespectBrowserAcceptHeader = true;
@@ -34,12 +35,12 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ApplicationContext>(opts =>
         opts.UseSqlServer(conn));
 builder.Services.AddIdentityCore<User>();
-builder.Services.AddAuthentication();
 builder.Services.ConfigureIdentity();
 builder.Services.ConfigureEmailSender(Configuration);
 builder.Services.ConfigureJWT(Configuration);
 builder.Services.ConfigureIISIntegration();
 builder.Services.ConfigureCors();
+//builder.Services.ConfigureHeaderLogging();
 builder.Services.AddScoped<ValidationFilterAttribute>();
 builder.Services.AddScoped<TraceIPAttribute>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -49,8 +50,15 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
     options.SuppressModelStateInvalidFilter = true;
 });
-var app = builder.Build();
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.ValueLengthLimit = int.MaxValue;
+    options.MultipartBodyLengthLimit = int.MaxValue;
+    options.MemoryBufferThreshold = int.MaxValue;
+});
 
+var app = builder.Build();
+app.UseHttpLogging();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -58,15 +66,19 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
     app.UseMigrationsEndPoint();
 }
-app.UseStaticFiles();
-app.UseMiddleware<HttpRequestBodyMiddleware>();
+
+//app.UseMiddleware<HttpRequestBodyMiddleware>();
 app.UseHttpsRedirection();
+app.UseStaticFiles(new StaticFileOptions()
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"StaticFiles")),
+    RequestPath = new PathString("/StaticFiles")
+});
 app.UseRouting();
 app.UseCors(myAllowSpecificOrigins);
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseSession();
 app.MapControllers();
 
 app.Run();

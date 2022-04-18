@@ -34,8 +34,8 @@ namespace IdentityAPI.Models.Configuration
             builder.HasData(
             new IdentityRole
             {
-                Name = "Visitor",
-                NormalizedName = "VISITOR"
+                Name = "User",
+                NormalizedName = "USER"
             },
             new IdentityRole
             {
